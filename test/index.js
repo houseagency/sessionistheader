@@ -67,13 +67,7 @@ describe('Module', () => {
 			.then(data => {
 				return header.verify(data, 'the payload', (keyid, cb) => { cb(null, 'my secret key'); });
 			})
-			.then(() => {
-				done();
-			})
-			.catch(err => {
-				done(err);
-			});
-
+			.done(done);
 		});
 
 		it('should fail when secret key is not the same', done => {
@@ -124,6 +118,25 @@ describe('Module', () => {
 			.catch(err => {
 				done(err);
 			});
+		});
+
+		it('should accept params in non-standard order', done => {
+			header('my key id', 'my secret key', 'the payload')
+			.then(data => {
+
+				let part = data.split(',').map(str => str.trim())
+				.reduce((pre, cur) => {
+					let [key, val] = cur.replace(/^([^: ]+: ){0,1}ss1 /, '').split('=');
+					pre[key] = val;
+					return pre;
+				}, {});
+
+				return 'ss1 time=' + part['time'] + ', salt=' + part['salt'] + ', hash=' + part['hash'] + ', keyid=' + part['keyid'];
+			})
+			.then(data => {
+				return header.verify(data, 'the payload', (keyid, cb) => { cb(null, 'my secret key'); });
+			})
+			.done(done);
 		});
 
 		it('should fail if format has too many params', done => {
