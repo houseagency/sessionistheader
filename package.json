@@ -1,0 +1,25 @@
+{
+  "name": "sessionistheader",
+  "version": "0.0.1",
+  "description": "Parsing and creating the Authorization header for Sessionist HTTP authorization.",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "test": "./node_modules/.bin/mocha --recursive --reporter spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "author": "Alfred Godoy <alfred@nurd.nu>",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "crypto-js": "3.1.6",
+    "q": "1.4.1"
+  },
+  "devDependencies": {
+    "chai": "3.5.0",
+    "mocha": "3.0.2"
+  }
+}
