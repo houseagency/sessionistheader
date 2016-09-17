@@ -1,11 +1,11 @@
 const q = require('q');
-const sha = str => (require('crypto-js/sha3'))(str).toString();
+const cryptojs = require('crypto-js');
+
+const sha = str => cryptojs.SHA3(str).toString();
 
 module.exports = (key_id, secret_key, payload, cb) => {
 	let deferred = q.defer();
-	let salt = Array.apply(null, Array(64)).map(() => (
-		'0' + (Math.floor(Math.random() * 256)).toString(16)).substr(-2)
-	).join('');
+	let salt = cryptojs.lib.WordArray.random(64).toString();
 	let time = '' + (new Date()).getTime();
 	let hash = sha(secret_key + sha(salt + sha(secret_key + payload + time)));
 	deferred.resolve([
@@ -34,13 +34,13 @@ module.exports.verify = (header, payload, keyfn, cb) => {
 		if (timeDiff > 86400000) {
 			deferred.reject(new Error('Too big time difference.'));
 		} else {
-			keyfn(h['keyid'], (err, secret_key) => {
+			setImmediate(() => keyfn(h['keyid'], (err, secret_key) => {
 				if (err) return deferred.reject(err);
 				if (h['hash'] !== sha(secret_key + sha(h['salt'] + sha(secret_key + payload + h['time'])))) {
 					return deferred.reject(new Error('Hash does not match.'));
 				}
 				deferred.resolve();
-			});
+			}));
 		}
 	}
 	deferred.promise.nodeify(cb);
