@@ -37,7 +37,7 @@ describe('Module', () => {
 		it('should return a string with proper length', done => {
 			header('my key id', 'my secret key', 'the payload')
 			.then(data => {
-				expect(data.length).to.equal(309);
+				expect(data.length).to.equal(310);
 			})
 			.done(done);
 		});
@@ -107,7 +107,7 @@ describe('Module', () => {
 		});
 
 		it('should fail if time diff is more than 24h', done => {
-			header.verify('ss1 keyid=my key id, hash=afc7e506a3e77a55d64ad2744d0f7a02d3bd9128ef1bf5eff04620c4b6fdd4e417b70893566edcef6ada6a4c5d76099c98bb06bfec5b93a1be793fdaba808ab9, salt=6591a74c5b9e6c2b41d371b93bf08c12618ed866c000746dfca5764f6706666ea2ed1fbf4538313f2fb7da30a509a3423e976008734c73918751c1b403a24373, time=1000000000000')
+			header.verify('ss1 keyid=my key id, hash=afc7e506a3e77a55d64ad2744d0f7a02d3bd9128ef1bf5eff04620c4b6fdd4e417b70893566edcef6ada6a4c5d76099c98bb06bfec5b93a1be793fdaba808ab9, nonce=6591a74c5b9e6c2b41d371b93bf08c12618ed866c000746dfca5764f6706666ea2ed1fbf4538313f2fb7da30a509a3423e976008734c73918751c1b403a24373, time=1000000000000')
 			.then(() => {
 				done(new Error('Should not get here.'));
 			})
@@ -131,7 +131,7 @@ describe('Module', () => {
 					return pre;
 				}, {});
 
-				return 'ss1 time=' + part['time'] + ', salt=' + part['salt'] + ', hash=' + part['hash'] + ', keyid=' + part['keyid'];
+				return 'ss1 time=' + part['time'] + ', nonce=' + part['nonce'] + ', hash=' + part['hash'] + ', keyid=' + part['keyid'];
 			})
 			.then(data => {
 				return header.verify(data, 'the payload', (keyid, cb) => { cb(null, 'my secret key'); });
@@ -140,7 +140,7 @@ describe('Module', () => {
 		});
 
 		it('should fail if format has too many params', done => {
-			header.verify('ss1 keyid=my key id, realm=wtf, hash=afc7e506a3e77a55d64ad2744d0f7a02d3bd9128ef1bf5eff04620c4b6fdd4e417b70893566edcef6ada6a4c5d76099c98bb06bfec5b93a1be793fdaba808ab9, salt=6591a74c5b9e6c2b41d371b93bf08c12618ed866c000746dfca5764f6706666ea2ed1fbf4538313f2fb7da30a509a3423e976008734c73918751c1b403a24373, time=' + (new Date()).getTime())
+			header.verify('ss1 keyid=my key id, realm=wtf, hash=afc7e506a3e77a55d64ad2744d0f7a02d3bd9128ef1bf5eff04620c4b6fdd4e417b70893566edcef6ada6a4c5d76099c98bb06bfec5b93a1be793fdaba808ab9, nonce=6591a74c5b9e6c2b41d371b93bf08c12618ed866c000746dfca5764f6706666ea2ed1fbf4538313f2fb7da30a509a3423e976008734c73918751c1b403a24373, time=' + (new Date()).getTime())
 			.then(() => {
 				done(new Error('Should not get here.'));
 			})

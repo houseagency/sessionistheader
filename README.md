@@ -43,7 +43,7 @@ verifying the body payload (checksum) of API requests.
 
 Format is:
 
-	Authorization: ss1 keyid=<keyid>, hash=<hash>, salt=<salt>, time=<time>
+	Authorization: ss1 keyid=<keyid>, hash=<hash>, nonce=<nonce>, time=<time>
 
 ### keyid
 
@@ -55,7 +55,7 @@ The hash is a 512 bit hash/checksum value in lower case hex format.
 
 It is caluclated this way:
 
-	HASH(secret_key || HASH(salt || HASH(secret_key || payload || time)))
+	HASH(secret_key || HASH(nonce || HASH(secret_key || payload || time)))
 
 Where:
 
@@ -63,7 +63,7 @@ Where:
 * `payload` is the HTTP body payload.
 * The `HASH()` function is SHA3-512.
 
-### salt
+### nonce 
 
 A random 512 bit value in lower case hex format. Should be generated on every
 request using some good random generator.
