@@ -59,7 +59,7 @@ It is caluclated this way:
 
 Where:
 
-* `||` means concatination.)
+* `||` means concatination.
 * `payload` is the HTTP body payload.
 * The `HASH()` function is SHA3-512.
 
