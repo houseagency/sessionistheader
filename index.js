@@ -19,6 +19,9 @@ function hash(secret_key, nonce, payload, time) {
 }
 
 module.exports = (key_id, secret_key, payload, timestamp, cb) => {
+	if (typeof key_id !== 'string') return cb(new Error('Key id must be a string.'));
+	if (typeof secret_key !== 'string') return cb(new Error('Secret key must be a string.'));
+
 	// Timestamp is optional:
 	if (typeof timestamp === 'function') {
 		cb = timestamp;
@@ -38,6 +41,8 @@ module.exports = (key_id, secret_key, payload, timestamp, cb) => {
 };
 
 module.exports.verify = (headerStr, payload, keyfn, cb) => {
+	if (typeof headerStr !== 'string') return cb(new Error('Header must be a string.'));
+
 	let deferred = q.defer();
 	let header = headerStr.replace(/^([^: ]+: ){0,1}ss1 /, '').split(/,\s*/)
 		.reduce((pre, cur) => Object.assign({}, pre, _.fromPairs([ cur.split('=') ])), {});
