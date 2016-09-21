@@ -1,8 +1,23 @@
 const cryptojs = require('crypto-js');
 const q = require('q');
+const jssha = require('jssha');
 const _ = require('lodash');
 
-const sha = str => cryptojs.SHA3(str).toString();
+function hash(secret_key, nonce, payload, time) {
+	let hash1 = new jssha('SHA3-512', 'TEXT');
+	let hash2 = new jssha('SHA3-512', 'TEXT');
+	let hash3 = new jssha('SHA3-512', 'TEXT');
+	hash1.update(secret_key);
+	hash2.update(nonce);
+	hash3.update(secret_key);
+
+	hash1.update(payload);
+
+	hash1.update(_.toString(time));
+	hash2.update(hash1.getHash('HEX'));
+	hash3.update(hash2.getHash('HEX'));
+	return hash3.getHash('HEX');
+}
 
 module.exports = (key_id, secret_key, payload, timestamp, cb) => {
 	// Timestamp is optional:
@@ -17,8 +32,8 @@ module.exports = (key_id, secret_key, payload, timestamp, cb) => {
 	if (time === 0) time = _.now();
 
 	let nonce = cryptojs.lib.WordArray.random(64).toString();
-	let hash = sha(secret_key + sha(nonce + sha(secret_key + payload + time)));
-	deferred.resolve('ss1 keyid=' + key_id + ', hash=' + hash + ', nonce=' + nonce + ', time=' + time);
+
+	deferred.resolve('ss1 keyid=' + key_id + ', hash=' + hash(secret_key, nonce, payload, time) + ', nonce=' + nonce + ', time=' + time);
 	deferred.promise.nodeify(cb);
 	return deferred.promise;
 };
@@ -34,7 +49,7 @@ module.exports.verify = (headerStr, payload, keyfn, cb) => {
 	} else {
 		setImmediate(() => keyfn(header['keyid'], (err, secret_key) => {
 			if (err) return deferred.reject(err);
-			if (header['hash'] !== sha(secret_key + sha(header['nonce'] + sha(secret_key + payload + header['time']))))
+			if (header['hash'] !== hash(secret_key, header['nonce'], payload, header['time']))
 				return deferred.reject(new Error('Hash does not match.'));
 			deferred.resolve();
 		}));
