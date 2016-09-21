@@ -3,6 +3,8 @@ const jssha = require('jssha');
 const _ = require('lodash');
 
 function hash(secret_key, nonce, payload, time) {
+	let deferred = q.defer();
+
 	let hash1 = new jssha('SHA3-512', 'TEXT');
 	let hash2 = new jssha('SHA3-512', 'TEXT');
 	let hash3 = new jssha('SHA3-512', 'TEXT');
@@ -10,12 +12,19 @@ function hash(secret_key, nonce, payload, time) {
 	hash2.update(nonce);
 	hash3.update(secret_key);
 
-	hash1.update(payload);
+	if (typeof payload === 'string') {
+		hash1.update(payload);
 
-	hash1.update(_.toString(time));
-	hash2.update(hash1.getHash('HEX'));
-	hash3.update(hash2.getHash('HEX'));
-	return hash3.getHash('HEX');
+		hash1.update(_.toString(time));
+		hash2.update(hash1.getHash('HEX'));
+		hash3.update(hash2.getHash('HEX'));
+		deferred.resolve(hash3.getHash('HEX'));
+
+	} else {
+		deferred.reject(new Error('Unknown payload format.'));
+	}
+
+	return deferred.promise;
 }
 
 module.exports = (key_id, secret_key, payload, timestamp, cb) => {
@@ -35,7 +44,12 @@ module.exports = (key_id, secret_key, payload, timestamp, cb) => {
 
 	let nonce = new Array(64).fill(0).map(() => ('0' + (Math.floor(Math.random() * 256).toString(16))).substr(-2)).join('');
 
-	deferred.resolve('ss1 keyid=' + key_id + ', hash=' + hash(secret_key, nonce, payload, time) + ', nonce=' + nonce + ', time=' + time);
+	hash(secret_key, nonce, payload, time)
+	.then(hashStr => {
+		deferred.resolve('ss1 keyid=' + key_id + ', hash=' + hashStr + ', nonce=' + nonce + ', time=' + time);
+	})
+	.done();
+
 	deferred.promise.nodeify(cb);
 	return deferred.promise;
 };
@@ -53,9 +67,13 @@ module.exports.verify = (headerStr, payload, keyfn, cb) => {
 	} else {
 		setImmediate(() => keyfn(header['keyid'], (err, secret_key) => {
 			if (err) return deferred.reject(err);
-			if (header['hash'] !== hash(secret_key, header['nonce'], payload, header['time']))
-				return deferred.reject(new Error('Hash does not match.'));
-			deferred.resolve();
+			hash(secret_key, header['nonce'], payload, header['time'])
+			.then(hashStr => {
+				if (header['hash'] !== hashStr) {
+					return deferred.reject(new Error('Hash does not match.'));
+				}
+				deferred.resolve();
+			});
 		}));
 	}
 	deferred.promise.nodeify(cb);
