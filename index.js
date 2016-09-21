@@ -4,10 +4,19 @@ const _ = require('lodash');
 
 const sha = str => cryptojs.SHA3(str).toString();
 
-module.exports = (key_id, secret_key, payload, cb) => {
+module.exports = (key_id, secret_key, payload, timestamp, cb) => {
+	// Timestamp is optional:
+	if (typeof timestamp === 'function') {
+		cb = timestamp;
+	}
+
 	let deferred = q.defer();
+
+	// Use current time if none (or 0) was sent to us:
+	let time = _.toInteger(timestamp);
+	if (time === 0) time = _.now();
+
 	let nonce = cryptojs.lib.WordArray.random(64).toString();
-	let time = _.now();
 	let hash = sha(secret_key + sha(nonce + sha(secret_key + payload + time)));
 	deferred.resolve('ss1 keyid=' + key_id + ', hash=' + hash + ', nonce=' + nonce + ', time=' + time);
 	deferred.promise.nodeify(cb);

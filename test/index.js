@@ -42,6 +42,15 @@ describe('Module', () => {
 			.done(done);
 		});
 
+		it('should use the time passed to it', done => {
+			let testtime = 1234567890000;
+			header('my key id', 'my secret key', 'the payload', testtime)
+			.then(data => {
+				expect(data).to.contain(', time=' + testtime);
+			})
+			.done(done);
+		});
+
 	});
 
 	describe('verifying header', () => {
