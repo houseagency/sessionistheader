@@ -68,18 +68,33 @@ module.exports = (key_id, secret_key, payload, timestamp, cb) => {
 };
 
 module.exports.verify = (headerStr, payload, keyfn, cb) => {
-	if (typeof headerStr !== 'string') return cb(new Error('Header must be a string.'));
+	// Implement callback:
+	if (typeof cb === 'function') {
+		module.exports.verify(headerStr, payload, keyfn)
+		.then(str => setImmediate(() => cb(null, str)))
+		.catch(err => setImmediate(() => cb(err)));
+		return;
+	}
 
-	let deferred = q.defer();
-	let header = headerStr.replace(/^([^: ]+: ){0,1}ss1 /, '').split(/,\s*/)
-		.reduce((pre, cur) => Object.assign({}, pre, _.fromPairs([ cur.split('=') ])), {});
-	if (Object.keys(header).sort().join(',') !== 'hash,keyid,nonce,time') {
-		deferred.reject(new Error('Wrong header format.'));
-	} else if (Math.abs(header['time'] - _.now()) > 86400000) {
-		deferred.reject(new Error('Too big time difference.'));
-	} else {
+	return q.fcall(() => {
+		if (typeof headerStr !== 'string') throw new Error('Header must be a string.');
+	})
+	.then(() => {
+		let header = headerStr
+			.replace(/^([^: ]+: ){0,1}ss1 /, '')
+			.split(/,\s*/)
+			.reduce((pre, cur) => Object.assign({}, pre, _.fromPairs([ cur.split('=') ])), {});
+		if (Object.keys(header).sort().join(',') !== 'hash,keyid,nonce,time') {
+			throw new Error('Wrong header format.');
+		} else if (Math.abs(header['time'] - _.now()) > 86400000) {
+			throw new Error('Too big time difference.');
+		}
+		return header;
+	})
+	.then(header => {
+		let deferred = q.defer();
 		setImmediate(() => keyfn(header['keyid'], (err, secret_key) => {
-			if (err) return deferred.reject(err);
+			if (err) throw err;
 			hash(secret_key, header['nonce'], payload, header['time'])
 			.then(hashStr => {
 				if (header['hash'] !== hashStr) {
@@ -88,7 +103,6 @@ module.exports.verify = (headerStr, payload, keyfn, cb) => {
 				deferred.resolve();
 			});
 		}));
-	}
-	deferred.promise.nodeify(cb);
-	return deferred.promise;
+		return deferred.promise;
+	});
 };
