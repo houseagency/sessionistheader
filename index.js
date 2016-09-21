@@ -26,7 +26,7 @@ function hash(secret_key, nonce, payload, time) {
 		return deferred.promise;
 	})
 	.then(() => {
-		hash1.update(_.toString(time));
+		hash2.update(_.toString(time));
 		hash2.update(hash1.getHash('HEX'));
 		hash3.update(hash2.getHash('HEX'));
 		return hash3.getHash('HEX');
@@ -34,30 +34,37 @@ function hash(secret_key, nonce, payload, time) {
 }
 
 module.exports = (key_id, secret_key, payload, timestamp, cb) => {
-	if (typeof key_id !== 'string') return cb(new Error('Key id must be a string.'));
-	if (typeof secret_key !== 'string') return cb(new Error('Secret key must be a string.'));
-
 	// Timestamp is optional:
 	if (typeof timestamp === 'function') {
 		cb = timestamp;
+		timestamp = 0;
 	}
 
-	let deferred = q.defer();
+	// Implement callback:
+	if (typeof cb === 'function') {
+		module.exports(key_id, secret_key, payload, timestamp)
+		.then(str => setImmediate(() => cb(null, str)))
+		.catch(err => setImmediate(() => cb(err)));
+		return;
+	}
 
-	// Use current time if none (or 0) was sent to us:
-	let time = _.toInteger(timestamp);
-	if (time === 0) time = _.now();
-
-	let nonce = new Array(64).fill(0).map(() => ('0' + (Math.floor(Math.random() * 256).toString(16))).substr(-2)).join('');
-
-	hash(secret_key, nonce, payload, time)
-	.then(hashStr => {
-		deferred.resolve('ss1 keyid=' + key_id + ', hash=' + hashStr + ', nonce=' + nonce + ', time=' + time);
+	return q.fcall(() => {
+		if (typeof key_id !== 'string') throw new Error('Key id must be a string.');
+		if (typeof secret_key !== 'string') throw new Error('Secret key must be a string.');
 	})
-	.done();
-
-	deferred.promise.nodeify(cb);
-	return deferred.promise;
+	.then(() => {
+		// Use current time if none (or 0) was sent to us:
+		let time = _.toInteger(timestamp);
+		if (time === 0) time = _.now();
+		return time;
+	})
+	.then(time => {
+		let nonce = new Array(64).fill(0).map(() => ('0' + (Math.floor(Math.random() * 256).toString(16))).substr(-2)).join('');
+		return hash(secret_key, nonce, payload, time)
+		.then(hashStr => {
+			return 'ss1 keyid=' + key_id + ', hash=' + hashStr + ', nonce=' + nonce + ', time=' + time;
+		});
+	});
 };
 
 module.exports.verify = (headerStr, payload, keyfn, cb) => {
