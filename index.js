@@ -1,4 +1,3 @@
-const cryptojs = require('crypto-js');
 const q = require('q');
 const jssha = require('jssha');
 const _ = require('lodash');
@@ -31,7 +30,7 @@ module.exports = (key_id, secret_key, payload, timestamp, cb) => {
 	let time = _.toInteger(timestamp);
 	if (time === 0) time = _.now();
 
-	let nonce = cryptojs.lib.WordArray.random(64).toString();
+	let nonce = new Array(64).fill(0).map(() => ('0' + (Math.floor(Math.random() * 256).toString(16))).substr(-2)).join('');
 
 	deferred.resolve('ss1 keyid=' + key_id + ', hash=' + hash(secret_key, nonce, payload, time) + ', nonce=' + nonce + ', time=' + time);
 	deferred.promise.nodeify(cb);
