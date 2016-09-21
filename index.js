@@ -3,28 +3,34 @@ const jssha = require('jssha');
 const _ = require('lodash');
 
 function hash(secret_key, nonce, payload, time) {
-	let deferred = q.defer();
-
 	let hash1 = new jssha('SHA3-512', 'TEXT');
 	let hash2 = new jssha('SHA3-512', 'TEXT');
 	let hash3 = new jssha('SHA3-512', 'TEXT');
-	hash1.update(secret_key);
-	hash2.update(nonce);
-	hash3.update(secret_key);
 
-	if (typeof payload === 'string') {
-		hash1.update(payload);
+	return q.fcall(() => {
+		hash1.update(secret_key);
+		hash2.update(nonce);
+		hash3.update(secret_key);
+	})
+	.then(() => {
 
+		let deferred = q.defer();
+
+		if (typeof payload === 'string') {
+			hash1.update(payload);
+			deferred.resolve();
+		} else {
+			deferred.reject(new Error('Unknown payload format.'));
+		}
+
+		return deferred.promise;
+	})
+	.then(() => {
 		hash1.update(_.toString(time));
 		hash2.update(hash1.getHash('HEX'));
 		hash3.update(hash2.getHash('HEX'));
-		deferred.resolve(hash3.getHash('HEX'));
-
-	} else {
-		deferred.reject(new Error('Unknown payload format.'));
-	}
-
-	return deferred.promise;
+		return hash3.getHash('HEX');
+	});
 }
 
 module.exports = (key_id, secret_key, payload, timestamp, cb) => {
