@@ -33,7 +33,7 @@ function hash(secret_key, nonce, payload, time) {
 	});
 }
 
-module.exports = (key_id, secret_key, payload, timestamp, cb) => {
+function generate(key_id, secret_key, payload, timestamp, cb) {
 	// Timestamp is optional:
 	if (typeof timestamp === 'function') {
 		cb = timestamp;
@@ -65,9 +65,9 @@ module.exports = (key_id, secret_key, payload, timestamp, cb) => {
 			return 'ss1 keyid=' + key_id + ', hash=' + hashStr + ', nonce=' + nonce + ', time=' + time;
 		});
 	});
-};
+}
 
-module.exports.verify = (headerStr, payload, keyfn, cb) => {
+function verify(headerStr, payload, keyfn, cb) {
 	// Implement callback:
 	if (typeof cb === 'function') {
 		module.exports.verify(headerStr, payload, keyfn)
@@ -105,4 +105,7 @@ module.exports.verify = (headerStr, payload, keyfn, cb) => {
 		}));
 		return deferred.promise;
 	});
-};
+}
+
+module.exports = generate;
+module.exports.verify = verify;
