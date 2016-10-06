@@ -1,6 +1,6 @@
 {
   "name": "sessionistheader",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Parsing and creating the Authorization header for Sessionist HTTP authorization.",
   "main": "index.js",
   "dependencies": {},
