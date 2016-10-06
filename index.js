@@ -99,6 +99,9 @@ function verify(headerStr, method, path, payload, date, keyfn, cb) {
 					return deferred.reject(new Error('Hash does not match.'));
 				}
 				deferred.resolve();
+			})
+			.catch(err => {
+				deferred.reject(err);
 			});
 		}));
 		return deferred.promise;
