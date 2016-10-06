@@ -34,9 +34,6 @@ function hash(secret_key, nonce, method, path, payload, date) {
 	.then(() => {
 		hash.update(date);
 		return hash.getHMAC('HEX');
-	})
-	.catch(err => {
-		console.log(err);
 	});
 }
 
