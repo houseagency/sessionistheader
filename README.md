@@ -18,6 +18,7 @@ How to create a valid header
 		req.setHeader('Authorization', auth);
 	});
 
+
 How to use the Promise interface
 ---------------------------------
 
@@ -34,6 +35,9 @@ and "1" tells this is version 1 of the Sessionist format.
 secret key. The secret key should be kept secret and only be used for making
 hashes/checksums. The key id, however, can be sent in clear text in the
 header.
+* All requests to the server must include a `Date:` HTTP header with the
+current time in `RFC2616` format. The server should not accept times
+older/newer than 24h from the current time.
 
 Header format
 --------------
@@ -43,7 +47,7 @@ verifying the body payload (checksum) of API requests.
 
 Format is:
 
-	Authorization: ss1 keyid=<keyid>, hash=<hash>, nonce=<nonce>, time=<time>
+	Authorization: ss1 keyid=<keyid>, hash=<hash>, nonce=<nonce>
 
 ### keyid
 
@@ -51,27 +55,25 @@ See more info about the "key id" in the "Principles" section above.
 
 ### hash
 
-The hash is a 512 bit hash/checksum value in lower case hex format.
+The hash is a SHA-512 HMAC (`RFC2104`) in lower case hex format,
+created like this:
 
-It is caluclated this way:
-
-	HASH(secret_key || HASH(nonce || HASH(secret_key || payload || time)))
+	HMAC(secret_key, nonce || method || path || payload || date)
 
 Where:
 
 * `||` means concatination.
+* `secret_key` is the assigned to the client (and identified by the `keyid`).
+* `nonce` is the nonce in binary format (not in hex).
+* `method` is the HTTP method for the request, in uppercase letters.
+* `path` is the path of the request (including query string, if there is one).
 * `payload` is the HTTP body payload.
-* The `HASH()` function is SHA3-512.
+* `date` is the content of the `Date:` HTTP header, i.e. the current time of
+  the client in `RFC2616` format.
 
 ### nonce 
 
 A random 512 bit value in lower case hex format. Should be generated on every
 request using some good random generator.
 
-### time
-
-The number of milliseconds since 1 Jan 1970 UTC (unix epoch time in
-milliseconds), as a string.
-
-The server should not accept times older/newer than 24h from the current time.
 
