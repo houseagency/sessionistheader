@@ -3,20 +3,20 @@ const jssha = require('jssha');
 const _ = require('lodash');
 
 function hash(secret_key, nonce, method, path, payload, date) {
-	let hash = new jssha('SHA-512', 'HEX');
+	let hash = new jssha('SHA-512', 'ARRAYBUFFER');
 	hash.setHMACKey(secret_key, 'TEXT');
 
 	return q.fcall(() => {
-		hash.update(nonce); // is already hex
-		hash.update(method);
-		hash.update(path);
+		hash.update(new Buffer(nonce, "hex"));
+		hash.update(new Buffer(method));
+		hash.update(new Buffer(path));
 	})
 	.then(() => {
 
 		let deferred = q.defer();
 
 		if (typeof payload === 'string') {
-			hash.update(payload);
+			hash.update(new Buffer(payload));
 			deferred.resolve();
 
 		} else if (typeof payload === 'object' && typeof payload.on === 'function') {
@@ -34,6 +34,9 @@ function hash(secret_key, nonce, method, path, payload, date) {
 	.then(() => {
 		hash.update(date);
 		return hash.getHMAC('HEX');
+	})
+	.catch(err => {
+		console.log(err);
 	});
 }
 
