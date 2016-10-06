@@ -11,19 +11,49 @@ How to create a valid header
 
 	let myKeyId = '4bc0093d';
 	let mySecretKey = '3485eac0182ef8123c116fc8392b34e817268e292';
+	let theHttpMethod = 'PUT';
+	let theHttpPath = '/api/v1/myservice?cool=very';
 	let theBodyPayload = '{ "whatever": "is in the body of the http request" }';
+	let theHttpDate = 'Thu, 06 Oct 2016 22:27:21 GMT';
 
-	sessionistHeader(myKeyId, mySecretKey, theBodyPayload, (err, auth) => {
+	// myKeyId is an identifier for your secret key.
+	// mySecretKey is the secret key.
+	// theHttpMethod is an uppercase string with the method, like "GET" or "POST"
+	// theHttpPath is the path (including querystring) for the request.
+	// theBodyPayload is the raw body content of the request.
+	// theHttpDate is the current time in RFC2616 format.
+
+	sessionistHeader(myKeyId, mySecretKey, theHttpMethod, theHttpPath, theBodyPayload, theHttpDate, (err, auth) => {
 		// The proper header string is now in the auth variable
 		req.setHeader('Authorization', auth);
+		req.setHeader('Date', theHttpDate); // Must also be set!
 	});
 
 
 How to use the Promise interface
 ---------------------------------
 
-	sessionistHeader(myKeyId, mySecretKey, theBodyPayload)
+	sessionistHeader(myKeyId, mySecretKey, theHttpMethod, theHttpPath, theBodyPayload, theHttpDate)
 	.then(auth => req.setHeader('Authorization', auth);
+
+How to verify an Authorization header
+--------------------------------------
+
+	const keyfn = (keyid, callback) => {
+		// This function should find the corresponding secret key to
+		// the given keyid, and then call the callback function, which
+		// take two parameters: err and secretkey:
+		callback(null, 'the topsecret key');
+	};
+
+	verify(headerStr, theHttpMethod, theHttpPath, theBodyPayload, theHttpDate, keyfn)
+	.then(() => {
+		// Yes, verified successfully!
+	})
+	.catch(err => {
+		// Nope. Not verified.
+	});
+
 
 Some principles regarding the Sessionist Authorization HTTP Header
 -------------------------------------------------------------------
