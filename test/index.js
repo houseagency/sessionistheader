@@ -170,6 +170,24 @@ describe('Module', () => {
 			});
 		});
 
+		it('should fail with same error if error is passed from keyfn', done => {
+			header('my key id', 'my secret key', 'POST', '/endpoint', 'the payload', today)
+			.then(data => {
+				return header.verify(data, 'POST', '/endpoint', 'the payload', today, (keyid, cb) => { cb(new Error('My Test Error')); });
+			})
+			.then(() => {
+				done(new Error('Should not get here.'));
+			})
+			.catch(err => {
+				expect(err.message).to.equal('My Test Error');
+				done();
+			})
+			.catch(err => {
+				done(err);
+			});
+
+		});
+
 	});
 
 });
