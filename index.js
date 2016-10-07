@@ -2,42 +2,44 @@ const q = require('q');
 const jssha = require('jssha');
 const _ = require('lodash');
 
-function hash(secret_key, nonce, method, path, payload, date) {
+const hash = (secret_key, nonce, method, path, payload, date) => {
 	let hash = new jssha('SHA-512', 'ARRAYBUFFER');
 	hash.setHMACKey(secret_key, 'TEXT');
 
-	return q.fcall(() => {
-		hash.update(new Buffer(nonce, "hex"));
-		hash.update(new Buffer(method));
-		hash.update(new Buffer(path));
-	})
-	.then(() => {
+	hash.update(new Buffer(nonce, "hex"));
+	hash.update(new Buffer(method));
+	hash.update(new Buffer(path));
 
-		let deferred = q.defer();
-
-		if (typeof payload === 'string') {
-			hash.update(new Buffer(payload));
-			deferred.resolve();
-
-		} else if (typeof payload === 'object' && typeof payload.on === 'function') {
-
-			payload.on('data', data => hash.update(data));
-			payload.on('end', () => deferred.resolve());
-			payload.on('error', () => deferred.reject(new Error('Error when reading payload events.')));
-
-		} else {
-			deferred.reject(new Error('Unknown payload format.'));
-		}
-
-		return deferred.promise;
-	})
-	.then(() => {
+	return payload
+	.then(bodyPayload => {
+		hash.update(bodyPayload);
 		hash.update(date);
 		return hash.getHMAC('HEX');
 	});
 }
 
-function generate(key_id, secret_key, method, path, payload, date, cb) {
+const payload_handler = (payload) => {
+	let deferred = q.defer();
+
+	if (typeof payload === 'string') {
+		deferred.resolve(new Buffer(payload));
+
+	} else if (typeof payload === 'object' && typeof payload.on === 'function') {
+
+		let data = new Buffer('');
+
+		payload.on('data', chunk => data = Buffer.concat([data, chunk]));
+		payload.on('end', () => deferred.resolve(data));
+		payload.on('error', () => deferred.reject(new Error('Error when reading payload events.')));
+
+	} else {
+		deferred.reject(new Error('Unknown payload format.'));
+	}
+
+	return deferred.promise;
+}
+
+const generate = (key_id, secret_key, method, path, payload, date, cb) => {
 	// Implement callback:
 	if (typeof cb === 'function') {
 		generate(key_id, secret_key, method, path, payload, date)
@@ -45,6 +47,8 @@ function generate(key_id, secret_key, method, path, payload, date, cb) {
 		.catch(err => setImmediate(() => cb(err)));
 		return;
 	}
+
+	payload = payload_handler(payload);
 
 	return q.fcall(() => {
 		if (typeof key_id !== 'string') throw new Error('Key id must be a string.');
@@ -59,7 +63,7 @@ function generate(key_id, secret_key, method, path, payload, date, cb) {
 	});
 }
 
-function verify(headerStr, method, path, payload, date, keyfn, cb) {
+const verify = (headerStr, method, path, payload, date, keyfn, cb) => {
 	// Implement callback:
 	if (typeof cb === 'function') {
 		module.exports.verify(headerStr, method, path, payload, date, keyfn)
@@ -67,6 +71,8 @@ function verify(headerStr, method, path, payload, date, keyfn, cb) {
 		.catch(err => setImmediate(() => cb(err)));
 		return;
 	}
+
+	payload = payload_handler(payload);
 
 	return q.fcall(() => {
 		if (typeof headerStr !== 'string') throw new Error('Header must be a string.');
