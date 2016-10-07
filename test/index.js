@@ -70,7 +70,13 @@ describe('Module', () => {
 			.then(data => {
 				return header.verify(data, 'POST', '/endpoint', 'the payload', today, (keyid, cb) => { cb(null, 'my secret key'); });
 			})
-			.done(done);
+			.then(keyid => {
+				expect(keyid).to.equal('my key id');
+				done();
+			})
+			.catch(err => {
+				done(err);
+			});
 		});
 
 		it('should fail when secret key is not the same', done => {
@@ -139,7 +145,8 @@ describe('Module', () => {
 			.then(data => {
 				return header.verify(data, 'POST', '/endpoint', 'the payload', today, (keyid, cb) => { cb(null, 'my secret key'); });
 			})
-			.done(done);
+			.then(() => done())
+			.catch(err => done(err));
 		});
 
 		it('should fail if format has too many params', done => {

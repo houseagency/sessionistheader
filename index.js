@@ -104,7 +104,7 @@ const verify = (headerStr, method, path, payload, date, keyfn, cb) => {
 				if (header['hash'] !== hashStr) {
 					return deferred.reject(new Error('Hash does not match.'));
 				}
-				deferred.resolve();
+				deferred.resolve(header['keyid']);
 			})
 			.catch(err => {
 				deferred.reject(err);
