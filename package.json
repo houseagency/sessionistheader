@@ -1,6 +1,6 @@
 {
   "name": "sessionistheader",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Parsing and creating the Authorization header for Sessionist HTTP authorization.",
   "main": "index.js",
   "dependencies": {},
@@ -15,7 +15,6 @@
   "author": "Alfred Godoy <alfred@nurd.nu>",
   "license": "GPL-3.0",
   "dependencies": {
-    "jssha": "2.2.0",
     "lodash": "4.15.0",
     "q": "1.4.1"
   },

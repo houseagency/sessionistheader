@@ -1,20 +1,19 @@
 const q = require('q');
-const jssha = require('jssha');
+const crypto = require('crypto');
 const _ = require('lodash');
 
 const hash = (secret_key, nonce, method, path, payload, date) => {
-	let hash = new jssha('SHA-512', 'ARRAYBUFFER');
-	hash.setHMACKey(secret_key, 'TEXT');
+	let hash = crypto.createHmac('sha512', secret_key);
 
-	hash.update(new Buffer(nonce, "hex"));
+	hash.update(new Buffer(nonce, 'hex'));
 	hash.update(new Buffer(method));
 	hash.update(new Buffer(path));
 
 	return payload
 	.then(bodyPayload => {
-		hash.update(bodyPayload);
+		if (bodyPayload.length) hash.update(bodyPayload);
 		hash.update(date);
-		return hash.getHMAC('HEX');
+		return hash.digest('hex');
 	});
 }
 
