@@ -1,6 +1,6 @@
 {
   "name": "sessionistheader",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Parsing and creating the Authorization header for Sessionist HTTP authorization.",
   "main": "index.js",
   "dependencies": {},
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "git+https://github.com/houseagency/sessionistheader.git"
   },
   "author": "Alfred Godoy <alfred@nurd.nu>",
   "license": "GPL-3.0",
