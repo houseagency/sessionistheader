@@ -195,6 +195,20 @@ describe('Module', () => {
 
 		});
 
+		it('should fail with no-such-key-error if keyfn returns nothing', done => {
+			header.verify('ss1 keyid=my key id, hash=afc7e506a3e77a55d64ad2744d0f7a02d3bd9128ef1bf5eff04620c4b6fdd4e417b70893566edcef6ada6a4c5d76099c98bb06bfec5b93a1be793fdaba808ab9, nonce=6591a74c5b9e6c2b41d371b93bf08c12618ed866c000746dfca5764f6706666ea2ed1fbf4538313f2fb7da30a509a3423e976008734c73918751c1b403a24373', 'POST', '/endpoint', 'payload', today, (keyid, cb) => { cb(); })
+			.then(data => {
+				done(new Error('Should not get here.'));
+			})
+			.catch(err => {
+				expect(err.message).to.equal('No such key.');
+				done();
+			})
+			.catch(err => {
+				done(err);
+			});
+		});
+
 	});
 
 });

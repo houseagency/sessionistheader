@@ -98,6 +98,7 @@ const verify = (headerStr, method, path, payload, date, keyfn, cb) => {
 		let deferred = q.defer();
 		setImmediate(() => keyfn(header['keyid'], (err, secret_key) => {
 			if (err) return deferred.reject(err);
+			if (!secret_key) return deferred.reject(new Error('No such key.'));
 			hash(secret_key, header['nonce'], method, path, payload, date)
 			.then(hashStr => {
 				if (header['hash'] !== hashStr) {
