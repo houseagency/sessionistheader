@@ -1,6 +1,8 @@
 Sessionist Authorization HTTP Header
 =====================================
 
+[![Build Status](https://semaphoreci.com/api/v1/houseagency/sessionistheader/branches/master/shields_badge.svg)](https://semaphoreci.com/houseagency/sessionistheader)
+
 This JavaScript module creates and verifies the Sessionist Authorization HTTP
 Header.
 
