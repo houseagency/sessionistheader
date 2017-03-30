@@ -26,7 +26,7 @@ describe('Module', () => {
 			.then(data => {
 				expect(data).to.be.a('string');
 			})
-			.done(done);
+			.then(done);
 		});
 
 		it('should return a string starting with our scheme identifyer', done => {
@@ -34,7 +34,7 @@ describe('Module', () => {
 			.then(data => {
 				expect(data.substr(0, 4)).to.equal('ss1 ');
 			})
-			.done(done);
+			.then(done);
 		});
 
 		it('should return a string with proper length', done => {
@@ -42,7 +42,7 @@ describe('Module', () => {
 			.then(data => {
 				expect(data.length).to.equal(290);
 			})
-			.done(done);
+			.then(done);
 		});
 
 	});
