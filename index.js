@@ -1,21 +1,19 @@
 const jsSHA = require('jssha');
 const nonceModule = require('./nonce');
 
-const utf8StrToHex = (str) => {
+function utf8StrToHex(str) {
 	let hex;
 	try {
 		hex = unescape(encodeURIComponent(str))
-		.split('').map(function(v){
-			return v.charCodeAt(0).toString(16)
-		}).join('')
-	} catch(e){
-		hex = str
-		console.log('invalid text input: ' + str)
+			.split('').map((v) => v.charCodeAt(0).toString(16))
+			.join('');
+	} catch (err) {
+		throw new Error('Invalid input.');
 	}
-	return hex
+	return hex;
 }
 
-const hash = (secret_key, nonce, method, path, payload, date) => {
+function hash(secret_key, nonce, method, path, payload, date) {
 	const hash = new jsSHA('SHA-512', 'HEX');
 	hash.setHMACKey(secret_key, 'TEXT');
 	hash.update(nonce);
@@ -30,7 +28,7 @@ const hash = (secret_key, nonce, method, path, payload, date) => {
 	});
 }
 
-const payload_handler = (payload) => {
+function payload_handler(payload) {
 	return new Promise((resolve, reject) => {
 		if (typeof payload === 'string') {
 			resolve(new Buffer(payload));
@@ -49,7 +47,7 @@ const payload_handler = (payload) => {
 	})
 }
 
-const generate = (key_id, secret_key, method, path, payload, date, cb) => {
+function generate(key_id, secret_key, method, path, payload, date, cb) {
 	// Implement callback:
 	if (typeof cb === 'function') {
 		generate(key_id, secret_key, method, path, payload, date)
@@ -78,7 +76,7 @@ const generate = (key_id, secret_key, method, path, payload, date, cb) => {
 	});
 }
 
-const verify = (headerStr, method, path, payload, date, keyfn, cb) => {
+function verify(headerStr, method, path, payload, date, keyfn, cb) {
 	// Implement callback:
 	if (typeof cb === 'function') {
 		module.exports.verify(headerStr, method, path, payload, date, keyfn)
