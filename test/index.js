@@ -79,6 +79,37 @@ describe('Module', () => {
 
 		});
 
+		describe('with another fixed nonce', done => {
+
+			beforeEach(() => {
+				td.replace(nonce, 'generateNonce');
+				td.when(nonce.generateNonce()).thenReturn(
+					'73475cb40a568e8da8a045ced110137e159f890ac4da883b6b17dc651b3a804973475cb40a568e8da8a045ced110137e159f890ac4da883b6b17dc651b3a8049'
+				);
+			});
+
+			it('should return the same header every time', done => {
+				header(
+					'my key id',
+					'my secret key',
+					'POST',
+					'/endpoint',
+					'the payload', 
+					new Date(1318023197289).toUTCString()
+				)
+				.then(data => {
+					expect(data).to.equal('ss1 keyid=my key id, hash=5ccb276c2f40e9c7bd95077ef5ff56f68e3ea30146bce4ee76cf443cf67f2f7d33546d4fe18d0f2a93bd8d353d7a45062baf6c4a8cffa0b95b90cb98aca9f379, nonce=73475cb40a568e8da8a045ced110137e159f890ac4da883b6b17dc651b3a804973475cb40a568e8da8a045ced110137e159f890ac4da883b6b17dc651b3a8049');
+				})
+				.then(done);
+
+			});
+
+			afterEach(() => {
+				td.reset();
+			});
+
+		});
+
 	});
 
 	describe('verifying header', () => {

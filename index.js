@@ -1,18 +1,32 @@
-const crypto = require('crypto');
+const jsSHA = require('jssha');
 const nonceModule = require('./nonce');
 
-const hash = (secret_key, nonce, method, path, payload, date) => {
-	let hash = crypto.createHmac('sha512', secret_key);
+const utf8StrToHex = (str) => {
+	let hex;
+	try {
+		hex = unescape(encodeURIComponent(str))
+		.split('').map(function(v){
+			return v.charCodeAt(0).toString(16)
+		}).join('')
+	} catch(e){
+		hex = str
+		console.log('invalid text input: ' + str)
+	}
+	return hex
+}
 
-	hash.update(new Buffer(nonce, 'hex'));
-	hash.update(new Buffer(method));
-	hash.update(new Buffer(path));
+const hash = (secret_key, nonce, method, path, payload, date) => {
+	const hash = new jsSHA('SHA-512', 'HEX');
+	hash.setHMACKey(secret_key, 'TEXT');
+	hash.update(nonce);
+	hash.update(utf8StrToHex(method));
+	hash.update(utf8StrToHex(path));
 
 	return payload
 	.then(bodyPayload => {
-		if (bodyPayload.length) hash.update(bodyPayload);
-		hash.update(date);
-		return hash.digest('hex');
+		if (bodyPayload.length) hash.update(utf8StrToHex(bodyPayload));
+		hash.update(utf8StrToHex(date));
+		return hash.getHMAC('HEX');
 	});
 }
 
