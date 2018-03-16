@@ -109,3 +109,8 @@ A random 512 bit value in lower case hex format. Should be generated on every
 request using some good random generator.
 
 
+TODO / On the road map before version 1.0
+-----------------------------------------
+
+* Ensuring compatibility with nodejs Buffers for the body payload.
+
