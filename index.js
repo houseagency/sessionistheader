@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const nonceModule = require('./nonce');
 
 const hash = (secret_key, nonce, method, path, payload, date) => {
 	let hash = crypto.createHmac('sha512', secret_key);
@@ -55,7 +56,7 @@ const generate = (key_id, secret_key, method, path, payload, date, cb) => {
 		}
 	})
 	.then(() => {
-		let nonce = new Array(64).fill(0).map(() => ('0' + (Math.floor(Math.random() * 256).toString(16))).substr(-2)).join('');
+		let nonce = nonceModule.generateNonce();
 		return hash(secret_key, nonce, method, path, payload, date)
 		.then(hashStr => {
 			return 'ss1 keyid=' + key_id + ', hash=' + hashStr + ', nonce=' + nonce;

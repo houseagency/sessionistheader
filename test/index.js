@@ -1,5 +1,8 @@
 const expect = require('chai').expect;
 const header = require('../index');
+const nonce = require('../nonce');
+
+const td = require('testdouble');
 
 describe('Module', () => {
 
@@ -43,6 +46,37 @@ describe('Module', () => {
 				expect(data.length).to.equal(290);
 			})
 			.then(done);
+		});
+
+		describe('with a fixed nonce', done => {
+
+			beforeEach(() => {
+				td.replace(nonce, 'generateNonce');
+				td.when(nonce.generateNonce()).thenReturn(
+					new Array(128).fill('0').join('')
+				);
+			});
+
+			it('should return the same header every time', done => {
+				header(
+					'my key id',
+					'my secret key',
+					'POST',
+					'/endpoint',
+					'the payload', 
+					new Date(1318023197289).toUTCString()
+				)
+				.then(data => {
+					expect(data).to.equal('ss1 keyid=my key id, hash=15622b52c1a45de70bca5102c7af5006cc64008a8e71aaf787361391fcf534590e99b4a19aa305ee32c9ab28661c99ffd33683a13b8c0f6ff7236f6030f86d6f, nonce=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000');
+				})
+				.then(done);
+
+			});
+
+			afterEach(() => {
+				td.reset();
+			});
+
 		});
 
 	});
