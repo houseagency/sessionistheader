@@ -1,10 +1,18 @@
 const abConcat = require('array-buffer-concat');
 const hex2ab = require('hex-to-array-buffer');
 const str2ab = require('encode-utf8');
-const buffer2ab = require('buffer-to-arraybuffer');
 
 const jsSHA = require('jssha');
 const nonceModule = require('./nonce');
+
+function buffer2ab(buf) {
+	const ab = new ArrayBuffer(buf.length);
+	const view = new Uint8Array(ab);
+	for (var i = 0; i < buf.length; ++i) {
+		view[i] = buf[i];
+	}
+	return ab;
+}
 
 function utf8StrToHex(str) {
 	let hex;
