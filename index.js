@@ -1,5 +1,15 @@
+const ab2str = require('arraybuffer-to-string');
+const abConcat = require('array-buffer-concat');
+const hex2ab = require('hex-to-array-buffer');
+const str2ab = require('encode-utf8');
+const toArrayBuffer = require('to-array-buffer');
+
 const jsSHA = require('jssha');
 const nonceModule = require('./nonce');
+
+function logAb(ab) {
+	console.log(ab2str(ab));
+}
 
 function utf8StrToHex(str) {
 	let hex;
@@ -14,32 +24,42 @@ function utf8StrToHex(str) {
 }
 
 function hash(secret_key, nonce, method, path, payload, date) {
-	const hash = new jsSHA('SHA-512', 'HEX');
+	const hash = new jsSHA('SHA-512', 'ARRAYBUFFER');
 	hash.setHMACKey(secret_key, 'TEXT');
-	hash.update(nonce);
-	hash.update(utf8StrToHex(method));
-	hash.update(utf8StrToHex(path));
+	hash.update(hex2ab(nonce));
+	hash.update(str2ab(method));
+	hash.update(str2ab(path));
 
 	return payload
 	.then(bodyPayload => {
-		if (bodyPayload.length) hash.update(utf8StrToHex(bodyPayload));
-		hash.update(utf8StrToHex(date));
+		hash.update(bodyPayload);
+		hash.update(str2ab(date));
 		return hash.getHMAC('HEX');
 	});
 }
 
 function payload_handler(payload) {
 	return new Promise((resolve, reject) => {
-		if (typeof payload === 'string') {
-			resolve(new Buffer(payload));
+
+		if (typeof payload.byteLength !== 'undefined') {
+
+			resolve(payload);
+
+		} else if (typeof payload === 'string') {
+			resolve(str2ab(payload));
+
 
 		} else if (typeof payload === 'object' && typeof payload.on === 'function') {
 
-			let data = new Buffer('');
+			let data = new ArrayBuffer(0);
 
-			payload.on('data', chunk => data = Buffer.concat([data, chunk]));
+			payload.on('data', chunk => {
+				const chunkAb = toArrayBuffer(chunk);
+				data = abConcat(data, chunkAb);
+			});
 			payload.on('end', () => resolve(data));
 			payload.on('error', () => reject(new Error('Error when reading payload events.')));
+
 
 		} else {
 			reject(new Error('Unknown payload format.'));
