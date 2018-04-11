@@ -1,15 +1,10 @@
-const ab2str = require('arraybuffer-to-string');
 const abConcat = require('array-buffer-concat');
 const hex2ab = require('hex-to-array-buffer');
 const str2ab = require('encode-utf8');
-const toArrayBuffer = require('to-array-buffer');
+const buffer2ab = require('buffer-to-arraybuffer');
 
 const jsSHA = require('jssha');
 const nonceModule = require('./nonce');
-
-function logAb(ab) {
-	console.log(ab2str(ab));
-}
 
 function utf8StrToHex(str) {
 	let hex;
@@ -54,7 +49,7 @@ function payload_handler(payload) {
 			let data = new ArrayBuffer(0);
 
 			payload.on('data', chunk => {
-				const chunkAb = toArrayBuffer(chunk);
+				const chunkAb = buffer2ab(chunk);
 				data = abConcat(data, chunkAb);
 			});
 			payload.on('end', () => resolve(data));

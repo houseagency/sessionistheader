@@ -1,16 +1,14 @@
 {
   "name": "sessionistheader",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Parsing and creating the Authorization header for Sessionist HTTP authorization.",
   "main": "index.js",
   "dependencies": {
     "array-buffer-concat": "^1.0.1",
-    "arraybuffer-to-string": "^1.0.2",
-    "decode-utf8": "^1.0.1",
+    "buffer-to-arraybuffer": "0.0.5",
     "encode-utf8": "^1.0.1",
     "hex-to-array-buffer": "^1.1.0",
-    "jssha": "^2.3.1",
-    "to-array-buffer": "^2.1.0"
+    "jssha": "^2.3.1"
   },
   "scripts": {
     "test": "./node_modules/.bin/mocha --recursive --reporter spec"
