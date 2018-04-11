@@ -1,6 +1,8 @@
 const expect = require('chai').expect;
 const header = require('../index');
 const nonce = require('../nonce');
+const os = require('os');
+const fs = require('fs');
 
 const td = require('testdouble');
 
@@ -101,6 +103,58 @@ describe('Module', () => {
 					expect(data).to.equal('ss1 keyid=my key id, hash=5ccb276c2f40e9c7bd95077ef5ff56f68e3ea30146bce4ee76cf443cf67f2f7d33546d4fe18d0f2a93bd8d353d7a45062baf6c4a8cffa0b95b90cb98aca9f379, nonce=73475cb40a568e8da8a045ced110137e159f890ac4da883b6b17dc651b3a804973475cb40a568e8da8a045ced110137e159f890ac4da883b6b17dc651b3a8049');
 				})
 				.then(done);
+
+			});
+
+			it('should return the same string on stream payload, buffer payload and string payload', done => {
+
+				const keyid = 'some key id';
+				const secretkey = 'blarf';
+				const method = 'POST';
+				const endpoint = '/example';
+				const date = new Date().toUTCString();
+
+				const payloadStr = '{ "hello": "this is a test" }';
+				const payloadBuffer = Buffer.from(payloadStr);
+				const payloadFile = os.tmpdir() + '/payload.tmp';
+
+				fs.writeFileSync(payloadFile, payloadBuffer);
+
+				header(keyid, secretkey, method, endpoint, payloadStr, date)
+					.then(headerStr => {
+
+						header(
+							keyid,
+							secretkey,
+							method,
+							endpoint,
+							payloadBuffer,
+							date
+						)
+							.then(headerBuffer => {
+
+								header(
+									keyid,
+									secretkey,
+									method,
+									endpoint,
+									fs.createReadStream(payloadFile),
+									date
+								)
+									.then(headerStream => {
+
+
+										expect(headerStream).to.equal(headerStr);
+										expect(headerBuffer).to.equal(headerStr);
+
+										done();
+
+									});
+
+							});
+
+					});
+
 
 			});
 
