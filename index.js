@@ -1,6 +1,5 @@
 const abConcat = require('array-buffer-concat');
 const hex2ab = require('hex-to-array-buffer');
-const str2ab = require('encode-utf8');
 
 const jsSHA = require('jssha');
 const nonceModule = require('./nonce');
@@ -13,6 +12,39 @@ function buffer2ab(buf) {
 	}
 	return ab;
 }
+
+function str2utf8buffer (str) {
+	const strLen = str.length
+	const target = new Uint8Array(strLen * 4)
+	var bufPos = 0
+	for (var strPos = 0; strPos < strLen; strPos += 1) {
+	    var val = str.charCodeAt(strPos)
+	    if (val >= 0xD800 && val <= 0xDBFF && strPos < strLen - 1) {
+		    const nextVal = str.charCodeAt(strPos + 1)
+		    if (nextVal >= 0xDC00 && nextVal <= 0xDFFF) {
+		        val = (val - 0xD800) * 0x400 + nextVal - 0xDC00 + 0x10000
+		        strPos += 1;
+		    }
+	    }
+	    if (val < 0x80) {
+	    	target.set([ val ], bufPos)
+		    bufPos += 1;
+	    } else if (val < 0x800) {
+		    target.set([ (val >> 6) | 192, (val & 63) | 128 ], bufPos)
+		    bufPos += 2
+	    } else if (val < 0xD800 || (val >= 0xE000 && val < 0x10000)) {
+		    target.set([ (val >> 12) | 224, ((val >> 6) & 63) | 128, (val & 63) | 128 ], bufPos)
+		    bufPos += 3
+	    } else if (val >= 0x10000 && val <= 0x10FFFF) {
+		    target.set([ (val >> 18) | 240, ((val >> 12) & 63) | 128, ((val >> 6) & 63) | 128, (val & 63) | 128 ], bufPos)
+		    bufPos += 4
+	    } else {
+		    target.set([ 0xEF, 0xBF, 0xBD ], bufPos)
+		    bufPos += 3
+	    }
+	}
+	return target.buffer.slice(0, bufPos);
+};
 
 function utf8StrToHex(str) {
 	var hex;
@@ -30,13 +62,13 @@ function hash(secret_key, nonce, method, path, payload, date) {
 	const hash = new jsSHA('SHA-512', 'ARRAYBUFFER');
 	hash.setHMACKey(secret_key, 'TEXT');
 	hash.update(hex2ab(nonce));
-	hash.update(str2ab(method));
-	hash.update(str2ab(path));
+	hash.update(str2utf8buffer(method));
+	hash.update(str2utf8buffer(path));
 
 	return payload
 	.then(function(bodyPayload) {
 		hash.update(bodyPayload);
-		hash.update(str2ab(date));
+		hash.update(str2utf8buffer(date));
 		return hash.getHMAC('HEX');
 	});
 }
@@ -49,7 +81,7 @@ function payload_handler(payload) {
 			resolve(payload);
 
 		} else if (typeof payload === 'string') {
-			resolve(str2ab(payload));
+			resolve(str2utf8buffer(payload));
 
 
 		} else if (typeof payload === 'object' && typeof payload.on === 'function') {
