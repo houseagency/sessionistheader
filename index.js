@@ -15,10 +15,10 @@ function buffer2ab(buf) {
 }
 
 function utf8StrToHex(str) {
-	let hex;
+	var hex;
 	try {
 		hex = unescape(encodeURIComponent(str))
-			.split('').map((v) => v.charCodeAt(0).toString(16))
+			.split('').map(function(v){ return v.charCodeAt(0).toString(16); })
 			.join('');
 	} catch (err) {
 		throw new Error('Invalid input.');
@@ -34,7 +34,7 @@ function hash(secret_key, nonce, method, path, payload, date) {
 	hash.update(str2ab(path));
 
 	return payload
-	.then(bodyPayload => {
+	.then(function(bodyPayload) {
 		hash.update(bodyPayload);
 		hash.update(str2ab(date));
 		return hash.getHMAC('HEX');
@@ -42,7 +42,7 @@ function hash(secret_key, nonce, method, path, payload, date) {
 }
 
 function payload_handler(payload) {
-	return new Promise((resolve, reject) => {
+	return new Promise(function(resolve, reject) {
 
 		if (typeof payload.byteLength !== 'undefined') {
 
@@ -54,14 +54,14 @@ function payload_handler(payload) {
 
 		} else if (typeof payload === 'object' && typeof payload.on === 'function') {
 
-			let data = new ArrayBuffer(0);
+			var data = new ArrayBuffer(0);
 
-			payload.on('data', chunk => {
+			payload.on('data', function(chunk) {
 				const chunkAb = buffer2ab(chunk);
 				data = abConcat(data, chunkAb);
 			});
-			payload.on('end', () => resolve(data));
-			payload.on('error', () => reject(new Error('Error when reading payload events.')));
+			payload.on('end', function() { resolve(data) });
+			payload.on('error', function() { reject(new Error('Error when reading payload events.')); });
 
 
 		} else {
@@ -74,14 +74,14 @@ function generate(key_id, secret_key, method, path, payload, date, cb) {
 	// Implement callback:
 	if (typeof cb === 'function') {
 		generate(key_id, secret_key, method, path, payload, date)
-		.then(str => setImmediate(() => cb(null, str)))
-		.catch(err => setImmediate(() => cb(err)));
+		.then(function(str) { setImmediate(function() { cb(null, str); }); })
+		.catch(function(err) { setImmediate(function() { cb(err); }); });
 		return;
 	}
 
 	payload = payload_handler(payload);
 
-	return new Promise((resolve, reject) => {
+	return new Promise(function(resolve, reject) {
 		if (typeof key_id !== 'string') {
 			reject(new Error('Key id must be a string.'));
 		} else if (typeof secret_key !== 'string') {
@@ -90,10 +90,10 @@ function generate(key_id, secret_key, method, path, payload, date, cb) {
 			resolve();
 		}
 	})
-	.then(() => {
-		let nonce = nonceModule.generateNonce();
+	.then(function() {
+		var nonce = nonceModule.generateNonce();
 		return hash(secret_key, nonce, method, path, payload, date)
-		.then(hashStr => {
+		.then(function(hashStr) {
 			return 'ss1 keyid=' + key_id + ', hash=' + hashStr + ', nonce=' + nonce;
 		});
 	});
@@ -103,33 +103,33 @@ function verify(headerStr, method, path, payload, date, keyfn, cb) {
 	// Implement callback:
 	if (typeof cb === 'function') {
 		module.exports.verify(headerStr, method, path, payload, date, keyfn)
-		.then(str => setImmediate(() => cb(null, str)))
-		.catch(err => setImmediate(() => cb(err)));
+		.then(function(str) { setImmediate(function() { cb(null, str); }); })
+		.catch(function(err) { setImmediate(function() { cb(err); }); });
 		return;
 	}
 
 	payload = payload_handler(payload);
 
-	return new Promise((resolve, reject) => {
+	return new Promise(function(resolve, reject) {
 		if (typeof headerStr !== 'string') {
 			reject(new Error('Header must be a string.'));
 		} else {
 			resolve();
 		}
 	})
-	.then(() => {
-		let timestamp = new Date(date).getTime();
+	.then(function() {
+		var timestamp = new Date(date).getTime();
 		if (typeof(timestamp) !== "number") {
 			throw new Error('Date format not valid.');
 		} else if (Math.abs(timestamp - (new Date()).getTime()) > 86400000) {
 			throw new Error('Too big time difference.');
 		}
 	})
-	.then(() => {
-		let header = headerStr
+	.then(function() {
+		var header = headerStr
 			.replace(/^([^: ]+: ){0,1}ss1 /, '')
 			.split(/,\s*/)
-			.reduce((col, line) => {
+			.reduce(function(col, line) {
 				const pair = line.split('=');
 				const prop = {};
 
@@ -147,27 +147,27 @@ function verify(headerStr, method, path, payload, date, keyfn, cb) {
 		}
 		return header;
 	})
-	.then(header => {
-		return new Promise((resolve, reject) => {
-			setImmediate(() => keyfn(header['keyid'], (err, secret_key) => {
+	.then(function(header) {
+		return new Promise(function(resolve, reject) {
+			setImmediate(function() { keyfn(header['keyid'], function(err, secret_key) {
 				if (err) {
 					reject(err);
 				} else if (!secret_key) {
 					reject(new Error('No such key.'));
 				} else {
 					hash(secret_key, header['nonce'], method, path, payload, date)
-					.then(hashStr => {
+					.then(function(hashStr) {
 						if (header['hash'] !== hashStr) {
 							reject(new Error('Hash does not match.'));
 						} else {
 							resolve(header['keyid']);
 						}
 					})
-					.catch(err => {
+					.catch(function(err) {
 						reject(err);
 					});
 				}
-			}));
+			})});
 		});
 	});
 }
